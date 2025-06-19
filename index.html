@@ -39,13 +39,16 @@
   </select>
 
   <button id="authBtn">🔑 Iniciar sesión con Google</button>
+  <button id="spotifyBtn"> Iniciar sesion con Spotify</button>
   <button id="generateBtn" disabled>🎶 Crear Playlist</button>
+  
 
   <div id="playlistLink"></div>
 
   <script>
+    
     let accessToken = null;
-
+    //Google y yutu
     const CLIENT_ID = '743111186567-mfqinhq9np4q2vdpe3otkrboacquoqee.apps.googleusercontent.com';
     const REDIRECT_URI = "https://parlop2305.github.io/generador-playlists/";
 
@@ -68,6 +71,29 @@
         '&scope=' + encodeURIComponent(scopes);
       window.location.href = url;
     };
+
+
+    const CLIENT_ID = '5e1d32a3e54b4fb1ba42be6b643162ea';
+const REDIRECT_URI = 'https://parlop2305.github.io/generador-playlists/';
+const SCOPES = [
+  'playlist-modify-public',
+  'playlist-modify-private',
+  'user-read-private',
+  'user-read-email'
+
+  document.getElementById('spotifyBtn').onclick = () => {
+  window.location.href = AUTH_URL;
+};
+];
+
+const AUTH_URL = 
+  'https://accounts.spotify.com/authorize' +
+  '?response_type=token' +
+  '&client_id=' + encodeURIComponent(CLIENT_ID) +
+  '&redirect_uri=' + encodeURIComponent(REDIRECT_URI) +
+  '&scope=' + encodeURIComponent(SCOPES.join(' '));
+
+    
 
     document.getElementById("generateBtn").onclick = async () => {
       const algorithm = document.getElementById("algorithm").value;
