@@ -59,11 +59,13 @@
 
     document.getElementById("authBtn").onclick = () => {
       localStorage.setItem("authSource", "google");
+      console.log("Redirigiendo a Google:", googleAuthURL);
       window.location.href = googleAuthURL;
     };
 
     document.getElementById("spotifyBtn").onclick = () => {
       localStorage.setItem("authSource", "spotify");
+      console.log("Redirigiendo a Spotify:", spotifyAuthURL);
       window.location.href = spotifyAuthURL;
     };
 
@@ -74,23 +76,67 @@
         const source = localStorage.getItem("authSource");
         if (source === "google") {
           googleToken = token;
+          console.log("Google token cargado:", googleToken);
           document.getElementById("generateBtn").disabled = false;
         } else if (source === "spotify") {
           spotifyToken = token;
+          console.log("Spotify token cargado:", spotifyToken);
           document.getElementById("generateSpotifyBtn").disabled = false;
         }
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     });
 
-    document.getElementById("generateSpotifyBtn").onclick = async () => {
+    document.getElementById("generateBtn").onclick = async () => {
+      console.log("Iniciando generación en YouTube...");
       const artist = document.getElementById("artist").value;
       const algorithm = document.getElementById("algorithm").value;
+      let queries = buildQueries(artist, algorithm);
 
-      let queries = [];
+      const videoIds = [];
+      for (let q of queries) {
+        const id = await searchVideo(q);
+        console.log("Búsqueda YouTube:", q, "→", id);
+        if (id) videoIds.push(id);
+      }
 
+      const playlistId = await createPlaylist(`Playlist (${algorithm}) - ${artist}`);
+      console.log("YouTube Playlist ID:", playlistId);
+
+      for (let videoId of videoIds) {
+        await addVideoToPlaylist(playlistId, videoId);
+      }
+
+      document.getElementById("playlistLink").innerHTML =
+        `✅ Playlist creada en YouTube: <a href="https://www.youtube.com/playlist?list=${playlistId}" target="_blank">Ver</a>`;
+    };
+
+    document.getElementById("generateSpotifyBtn").onclick = async () => {
+      console.log("Iniciando generación en Spotify...");
+      const artist = document.getElementById("artist").value;
+      const algorithm = document.getElementById("algorithm").value;
+      let queries = buildQueries(artist, algorithm);
+
+      const trackUris = [];
+      for (let q of queries) {
+        const uri = await searchSpotifyTracks(q);
+        console.log("Búsqueda Spotify:", q, "→", uri);
+        if (uri) trackUris.push(uri);
+      }
+
+      const userId = await getSpotifyUserId();
+      console.log("Spotify User ID:", userId);
+      const playlistId = await createSpotifyPlaylist(userId, `Playlist (${algorithm}) - ${artist}`);
+      console.log("Spotify Playlist ID:", playlistId);
+      await addTracksToSpotifyPlaylist(playlistId, trackUris);
+
+      document.getElementById("playlistLink").innerHTML =
+        `✅ Playlist creada en Spotify: <a href="https://open.spotify.com/playlist/${playlistId}" target="_blank">Ver</a>`;
+    };
+
+    function buildQueries(artist, algorithm) {
       if (algorithm === "content") {
-        queries = [
+        return [
           `${artist} top hits`,
           `${artist} best songs`,
           `${artist} ${new Date().getFullYear()}`
@@ -104,33 +150,60 @@
         let match = Object.entries(perfiles).find(([_, artistas]) =>
           artistas.some(a => artist.toLowerCase().includes(a.toLowerCase()))
         );
-        queries = match
+        return match
           ? match[1].map(a => `${a} best hits`)
           : [`${artist} playlist`, `${artist} best of`];
-      } else if (algorithm === "random") {
+      } else {
         const año = new Date().getFullYear();
         const extras = ["mix", "live", "official"];
         const extra = extras[Math.floor(Math.random() * extras.length)];
-        queries = [
+        return [
           `Top music ${año}`,
           `${artist} ${extra}`,
           `Trending music ${año}`
         ];
       }
+    }
 
-      const trackUris = [];
-      for (let q of queries) {
-        const uri = await searchSpotifyTracks(q);
-        if (uri) trackUris.push(uri);
-      }
+    async function searchVideo(query) {
+      const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q=${encodeURIComponent(query)}&maxResults=1`, {
+        headers: { Authorization: `Bearer ${googleToken}` }
+      });
+      const data = await res.json();
+      return data.items?.[0]?.id?.videoId || null;
+    }
 
-      const userId = await getSpotifyUserId();
-      const playlistId = await createSpotifyPlaylist(userId, `Playlist (${algorithm}) - ${artist}`);
-      await addTracksToSpotifyPlaylist(playlistId, trackUris);
+    async function createPlaylist(title) {
+      const res = await fetch('https://www.googleapis.com/youtube/v3/playlists?part=snippet,status', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${googleToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          snippet: { title: title, description: 'Generado automáticamente' },
+          status: { privacyStatus: 'private' }
+        })
+      });
+      const data = await res.json();
+      return data.id;
+    }
 
-      document.getElementById("playlistLink").innerHTML =
-        `✅ Playlist creada en Spotify: <a href="https://open.spotify.com/playlist/${playlistId}" target="_blank">Ver</a>`;
-    };
+    async function addVideoToPlaylist(playlistId, videoId) {
+      await fetch('https://www.googleapis.com/youtube/v3/playlistItems?part=snippet', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${googleToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          snippet: {
+            playlistId: playlistId,
+            resourceId: { kind: "youtube#video", videoId: videoId }
+          }
+        })
+      });
+    }
 
     async function searchSpotifyTracks(query) {
       const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=1`, {
@@ -178,3 +251,4 @@
   </script>
 </body>
 </html>
+
