@@ -25,6 +25,7 @@
   <button id="authBtn">🔑 Iniciar sesión con Google</button>
   <button id="spotifyBtn">🟢 Iniciar sesión con Spotify</button>
   <button id="generateBtn" disabled>🎶 Crear Playlist (YouTube)</button>
+  <button id="generateSpotifyBtn" disabled>🎶 Crear Playlist (Spotify)</button>
 
   <div id="playlistLink"></div>
 
@@ -76,13 +77,13 @@
           document.getElementById("generateBtn").disabled = false;
         } else if (source === "spotify") {
           spotifyToken = token;
-          alert("Sesión iniciada con Spotify. Integración en desarrollo.");
+          document.getElementById("generateSpotifyBtn").disabled = false;
         }
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     });
 
-    document.getElementById("generateBtn").onclick = async () => {
+    document.getElementById("generateSpotifyBtn").onclick = async () => {
       const artist = document.getElementById("artist").value;
       const algorithm = document.getElementById("algorithm").value;
 
@@ -117,58 +118,61 @@
         ];
       }
 
-      const videoIds = [];
+      const trackUris = [];
       for (let q of queries) {
-        const id = await searchVideo(q);
-        if (id) videoIds.push(id);
+        const uri = await searchSpotifyTracks(q);
+        if (uri) trackUris.push(uri);
       }
 
-      const playlistId = await createPlaylist(`Playlist (${algorithm}) - ${artist}`);
-      for (let videoId of videoIds) {
-        await addVideoToPlaylist(playlistId, videoId);
-      }
+      const userId = await getSpotifyUserId();
+      const playlistId = await createSpotifyPlaylist(userId, `Playlist (${algorithm}) - ${artist}`);
+      await addTracksToSpotifyPlaylist(playlistId, trackUris);
 
       document.getElementById("playlistLink").innerHTML =
-        `✅ Playlist creada en YouTube: <a href="https://www.youtube.com/playlist?list=${playlistId}" target="_blank">Ver</a>`;
+        `✅ Playlist creada en Spotify: <a href="https://open.spotify.com/playlist/${playlistId}" target="_blank">Ver</a>`;
     };
 
-    async function searchVideo(query) {
-      const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q=${encodeURIComponent(query)}&maxResults=1`, {
-        headers: { Authorization: `Bearer ${googleToken}` }
+    async function searchSpotifyTracks(query) {
+      const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=1`, {
+        headers: { Authorization: `Bearer ${spotifyToken}` }
       });
       const data = await res.json();
-      return data.items?.[0]?.id?.videoId || null;
+      return data.tracks?.items?.[0]?.uri || null;
     }
 
-    async function createPlaylist(title) {
-      const res = await fetch('https://www.googleapis.com/youtube/v3/playlists?part=snippet,status', {
+    async function getSpotifyUserId() {
+      const res = await fetch('https://api.spotify.com/v1/me', {
+        headers: { Authorization: `Bearer ${spotifyToken}` }
+      });
+      const data = await res.json();
+      return data.id;
+    }
+
+    async function createSpotifyPlaylist(userId, name) {
+      const res = await fetch(`https://api.spotify.com/v1/users/${userId}/playlists`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${googleToken}`,
+          Authorization: `Bearer ${spotifyToken}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          snippet: { title: title, description: 'Generado automáticamente' },
-          status: { privacyStatus: 'private' }
+          name: name,
+          description: 'Generado automáticamente',
+          public: false
         })
       });
       const data = await res.json();
       return data.id;
     }
 
-    async function addVideoToPlaylist(playlistId, videoId) {
-      await fetch('https://www.googleapis.com/youtube/v3/playlistItems?part=snippet', {
+    async function addTracksToSpotifyPlaylist(playlistId, trackUris) {
+      await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${googleToken}`,
+          Authorization: `Bearer ${spotifyToken}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          snippet: {
-            playlistId: playlistId,
-            resourceId: { kind: "youtube#video", videoId: videoId }
-          }
-        })
+        body: JSON.stringify({ uris: trackUris })
       });
     }
   </script>
