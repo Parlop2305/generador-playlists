@@ -15,15 +15,20 @@
   <label>Artista favorito:</label>
   <input type="text" id="artist" placeholder="Ej: Bad Bunny">
 
+  <label>Algoritmo:</label>
+  <select id="algorithm">
+    <option value="content">🎯 Basado en contenido</option>
+    <option value="collaborative">🧠 Colaborativo simulado</option>
+    <option value="random">🎲 Popularidad + aleatorio</option>
+  </select>
+
   <button id="authBtn">🔑 Iniciar sesión con Google</button>
   <button id="spotifyBtn">🟢 Iniciar sesión con Spotify</button>
-
-  <button id="generateBtn" disabled>🎶 Crear Playlist (Google)</button>
+  <button id="generateBtn" disabled>🎶 Crear Playlist (YouTube)</button>
 
   <div id="playlistLink"></div>
 
   <script>
-    // === CONFIGURACIÓN GOOGLE ===
     const GOOGLE_CLIENT_ID = '743111186567-mfqinhq9np4q2vdpe3otkrboacquoqee.apps.googleusercontent.com';
     const GOOGLE_REDIRECT_URI = 'https://parlop2305.github.io/generador-playlists/';
     const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/youtube';
@@ -34,7 +39,6 @@
       '&response_type=token' +
       '&scope=' + encodeURIComponent(GOOGLE_SCOPES);
 
-    // === CONFIGURACIÓN SPOTIFY ===
     const SPOTIFY_CLIENT_ID = '5e1d32a3e54b4fb1ba42be6b643162ea';
     const SPOTIFY_REDIRECT_URI = 'https://parlop2305.github.io/generador-playlists/';
     const SPOTIFY_SCOPES = [
@@ -52,7 +56,6 @@
     let googleToken = null;
     let spotifyToken = null;
 
-    // === BOTONES DE AUTENTICACIÓN ===
     document.getElementById("authBtn").onclick = () => {
       localStorage.setItem("authSource", "google");
       window.location.href = googleAuthURL;
@@ -63,37 +66,67 @@
       window.location.href = spotifyAuthURL;
     };
 
-    // === MANEJAR EL TOKEN AL VOLVER DEL LOGIN ===
     window.addEventListener('load', function () {
       const hash = window.location.hash;
-
       if (hash.includes('access_token')) {
         const token = new URLSearchParams(hash.substring(1)).get('access_token');
         const source = localStorage.getItem("authSource");
-
         if (source === "google") {
           googleToken = token;
           document.getElementById("generateBtn").disabled = false;
-          console.log("Google token:", googleToken);
         } else if (source === "spotify") {
           spotifyToken = token;
-          alert("Sesión iniciada con Spotify. Aún no vinculada la creación de playlist.");
-          console.log("Spotify token:", spotifyToken);
+          alert("Sesión iniciada con Spotify. Integración en desarrollo.");
         }
-
-        // Limpia el hash de la URL por seguridad
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     });
 
-    // === CREAR PLAYLIST EN YOUTUBE (solo de prueba)
     document.getElementById("generateBtn").onclick = async () => {
       const artist = document.getElementById("artist").value;
-      const query = `${artist} top hits`;
+      const algorithm = document.getElementById("algorithm").value;
 
-      const videoId = await searchVideo(query);
-      const playlistId = await createPlaylist(`Playlist de ${artist}`);
-      await addVideoToPlaylist(playlistId, videoId);
+      let queries = [];
+
+      if (algorithm === "content") {
+        queries = [
+          `${artist} top hits`,
+          `${artist} best songs`,
+          `${artist} ${new Date().getFullYear()}`
+        ];
+      } else if (algorithm === "collaborative") {
+        const perfiles = {
+          Sofía: ["Adele", "Taylor Swift", "Lorde"],
+          Carlos: ["Linkin Park", "Imagine Dragons", "Muse"],
+          Mariana: ["Bad Bunny", "Karol G", "Rauw Alejandro"]
+        };
+        let match = Object.entries(perfiles).find(([_, artistas]) =>
+          artistas.some(a => artist.toLowerCase().includes(a.toLowerCase()))
+        );
+        queries = match
+          ? match[1].map(a => `${a} best hits`)
+          : [`${artist} playlist`, `${artist} best of`];
+      } else if (algorithm === "random") {
+        const año = new Date().getFullYear();
+        const extras = ["mix", "live", "official"];
+        const extra = extras[Math.floor(Math.random() * extras.length)];
+        queries = [
+          `Top music ${año}`,
+          `${artist} ${extra}`,
+          `Trending music ${año}`
+        ];
+      }
+
+      const videoIds = [];
+      for (let q of queries) {
+        const id = await searchVideo(q);
+        if (id) videoIds.push(id);
+      }
+
+      const playlistId = await createPlaylist(`Playlist (${algorithm}) - ${artist}`);
+      for (let videoId of videoIds) {
+        await addVideoToPlaylist(playlistId, videoId);
+      }
 
       document.getElementById("playlistLink").innerHTML =
         `✅ Playlist creada en YouTube: <a href="https://www.youtube.com/playlist?list=${playlistId}" target="_blank">Ver</a>`;
