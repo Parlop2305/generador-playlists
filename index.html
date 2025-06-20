@@ -1,33 +1,98 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Generador de Playlists</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; }
-    button, input, select { padding: 10px; margin: 10px 0; width: 100%; font-size: 16px; }
-    #playlistLink { margin-top: 20px; font-weight: bold; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #141e30, #243b55);
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+    }
+
+    .container {
+      max-width: 400px;
+      margin: auto;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      text-align: left;
+      font-weight: bold;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      margin-bottom: 15px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    input, select {
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    button {
+      background: #1db954;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #17a14b;
+    }
+
+    #playlistLink {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+
+    a {
+      color: #1db954;
+      text-decoration: underline;
+    }
   </style>
 </head>
+
 <body>
-  <h1>🎵 Generador de Playlist</h1>
+  <div class="container">
+    <h1>🎵 Generador de Playlists</h1>
 
-  <label>Artista favorito:</label>
-  <input type="text" id="artist" placeholder="Ej: Bad Bunny">
+    <label for="artist">Artista favorito:</label>
+    <input type="text" id="artist" placeholder="Ej: Bad Bunny" />
 
-  <label>Algoritmo:</label>
-  <select id="algorithm">
-    <option value="content">🎯 Basado en contenido</option>
-    <option value="collaborative">🧠 Colaborativo simulado</option>
-    <option value="random">🎲 Popularidad + aleatorio</option>
-  </select>
+    <label for="algorithm">Algoritmo:</label>
+    <select id="algorithm">
+      <option value="content">🎯 Basado en contenido</option>
+      <option value="collaborative">🧠 Colaborativo simulado</option>
+      <option value="random">🎲 Popularidad + aleatorio</option>
+    </select>
 
-  <button id="authBtn">🔑 Iniciar sesión con Google</button>
-  <button id="spotifyBtn">🟢 Iniciar sesión con Spotify</button>
-  <button id="generateBtn" disabled>🎶 Crear Playlist (YouTube)</button>
-  <button id="generateSpotifyBtn" disabled>🎶 Crear Playlist (Spotify)</button>
+    <button id="authBtn">🔑 Iniciar sesión con Google</button>
+    <button id="spotifyBtn">🟢 Iniciar sesión con Spotify</button>
+    <button id="generateBtn" disabled>🎶 Crear Playlist (YouTube)</button>
+    <button id="generateSpotifyBtn" disabled>🎶 Crear Playlist (Spotify)</button>
 
-  <div id="playlistLink"></div>
+    <div id="playlistLink"></div>
+  </div>
 
   <script>
     const GOOGLE_CLIENT_ID = '743111186567-mfqinhq9np4q2vdpe3otkrboacquoqee.apps.googleusercontent.com';
