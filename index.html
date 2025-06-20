@@ -97,19 +97,22 @@
       for (let q of queries) {
         const id = await searchVideo(q);
         console.log("Búsqueda YouTube:", q, "→", id);
-        if (id) videoIds.push(id);
+        if (id && !videoIds.includes(id)) {
+          videoIds.push(id);
+        }
       }
 
+      const uniqueIds = [...new Set(videoIds)];
       const playlistId = await createPlaylist(`Playlist (${algorithm}) - ${artist}`);
-      console.log("YouTube Playlist ID:", playlistId);
 
-      for (let videoId of videoIds) {
+      for (let videoId of uniqueIds) {
         await addVideoToPlaylist(playlistId, videoId);
       }
 
       document.getElementById("playlistLink").innerHTML =
         `✅ Playlist creada en YouTube: <a href="https://www.youtube.com/playlist?list=${playlistId}" target="_blank">Ver</a>`;
     };
+
 
     document.getElementById("generateSpotifyBtn").onclick = async () => {
       console.log("Iniciando generación en Spotify...");
