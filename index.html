@@ -248,32 +248,47 @@
   }
 }
 
-    async function searchVideo(query) {
-  const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q=${encodeURIComponent(query + ' official music video')}&maxResults=5`, {
-    headers: { Authorization: `Bearer ${googleToken}` }
-  });
+async function searchVideo(query) {
+  try {
+    const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q=${encodeURIComponent(query + ' official music video')}&maxResults=5`, {
+      headers: { Authorization: `Bearer ${googleToken}` }
+    });
 
-  const data = await res.json();
-
-  for (let item of data.items) {
-    const title = item.snippet.title.toLowerCase();
-    const id = item.id?.videoId;
-
-    if (
-      id &&
-      !title.includes("mix") &&
-      !title.includes("album") &&
-      !title.includes("recopilación") &&
-      !title.includes("full") &&
-      !title.includes("live") &&
-      !title.includes("concert")
-    ) {
-      return id;
+    if (!res.ok) {
+      console.error("Error en la API de YouTube:", res.status);
+      return null;
     }
+
+    const data = await res.json();
+
+    if (!data.items || !Array.isArray(data.items)) {
+      console.warn("Respuesta inesperada de YouTube:", data);
+      return null;
+    }
+
+    for (let item of data.items) {
+      const title = item.snippet.title.toLowerCase();
+      const id = item.id?.videoId;
+
+      if (
+        id &&
+        !title.includes("mix") &&
+        !title.includes("album") &&
+        !title.includes("recopilación") &&
+        !title.includes("full") &&
+        !title.includes("live") &&
+        !title.includes("concert")
+      ) {
+        return id;
+      }
+    }
+  } catch (err) {
+    console.error("Error en searchVideo:", err);
   }
 
   return null;
 }
+
     async function createPlaylist(title) {
       const res = await fetch('https://www.googleapis.com/youtube/v3/playlists?part=snippet,status', {
         method: 'POST',
