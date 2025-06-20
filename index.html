@@ -205,9 +205,6 @@
 
   return null;
 }
-
-}
-
     async function createPlaylist(title) {
       const res = await fetch('https://www.googleapis.com/youtube/v3/playlists?part=snippet,status', {
         method: 'POST',
