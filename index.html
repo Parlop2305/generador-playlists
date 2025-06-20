@@ -163,18 +163,7 @@
 
   return finalArtists.map(a => `${a} official music video`);
 
-  } else if{
-    const año = new Date().getFullYear();
-    const extras = ["official audio", "live", "remix", "versión acústica", "lyric video"];
-    const extra = extras[Math.floor(Math.random() * extras.length)];
-
-    return [
-    `Top music ${año}`,
-    `${artist} ${extra}`,
-    `Trending ${artist} ${año}`
-];
-
-  }else {
+  } else {
     return [
       `Top global songs ${año}`,
       `Top latino hits ${año}`,
