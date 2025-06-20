@@ -90,6 +90,9 @@
       <option value="collaborative">🧠 Colaborativo simulado</option>
       <option value="random">🎲 Popularidad + aleatorio</option>
     </select>
+      <label for="trackCount">🎚️ Número de canciones:</label>
+      <input type="range" id="trackCount" min="5" max="20" value="10" step="1" />
+    <span id="trackCountValue">10</span> canciones
 
     <button id="authBtn">🔑 Iniciar sesión con Google</button>
     <button id="spotifyBtn">🟢 Iniciar sesión con Spotify</button>
@@ -158,34 +161,70 @@
     });
 
     document.getElementById("generateBtn").onclick = async () => {
-      console.log("Iniciando generación en YouTube...");
+      console.log("🎬 Generando playlist en YouTube...");
+      const limit = parseInt(document.getElementById("trackCount").value);
       const artist = document.getElementById("artist").value;
       const algorithm = document.getElementById("algorithm").value;
       let queries = buildQueries(artist, algorithm);
 
       const videoIds = [];
-      for (let q of queries) {
-        const id = await searchVideo(q);
-        console.log("Búsqueda YouTube:", q, "→", id);
-        if (id && !videoIds.includes(id)) {
-          videoIds.push(id);
+
+      for (let query of queries) {
+        const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q=${encodeURIComponent(query)}&maxResults=5`, {
+          headers: { Authorization: `Bearer ${googleToken}` }
+        });
+
+        if (!res.ok) {
+          console.warn("Error al buscar:", query, res.status);
+          continue;
         }
+
+        const data = await res.json();
+        if (!data.items || !Array.isArray(data.items)) continue;
+
+        for (let item of data.items) {
+          const title = item.snippet.title.toLowerCase();
+          const id = item.id?.videoId;
+    
+          if (
+            id &&
+            !title.includes("mix") &&
+            !title.includes("album") &&
+            !title.includes("recopilación") &&
+            !title.includes("full") &&
+            !title.includes("live") &&
+            !title.includes("concert") &&
+            !videoIds.includes(id)
+          ) {
+            videoIds.push(id);
+          }
+
+          if (videoIds.length >= limit) break;
+        }
+
+      if (videoIds.length >= limit) break;
+      }
+    
+      if (videoIds.length === 0) {
+        document.getElementById("playlistLink").innerHTML =
+          "⚠️ No se encontraron canciones. Intenta con otro artista.";
+        return;
       }
 
-      const uniqueIds = [...new Set(videoIds)];
       const playlistId = await createPlaylist(`Playlist (${algorithm}) - ${artist}`);
 
-      for (let videoId of uniqueIds) {
+      for (let videoId of videoIds) {
         await addVideoToPlaylist(playlistId, videoId);
       }
 
       document.getElementById("playlistLink").innerHTML =
-        `✅ Playlist creada en YouTube: <a href="https://www.youtube.com/playlist?list=${playlistId}" target="_blank">Ver</a>`;
-    };
+        `✅ Playlist creada en YouTube con ${videoIds.length} canciones: <a href="https://www.youtube.com/playlist?list=${playlistId}" target="_blank">Ver</a>`;
+};
 
 
     document.getElementById("generateSpotifyBtn").onclick = async () => {
       console.log("Iniciando generación en Spotify...");
+      
       const artist = document.getElementById("artist").value;
       const algorithm = document.getElementById("algorithm").value;
       let queries = buildQueries(artist, algorithm);
@@ -365,6 +404,9 @@ async function searchVideo(query) {
         body: JSON.stringify({ uris: trackUris })
       });
     }
+    document.getElementById("trackCount").addEventListener("input", function () {
+    document.getElementById("trackCountValue").textContent = this.value;
+});
   </script>
 </body>
 </html>
