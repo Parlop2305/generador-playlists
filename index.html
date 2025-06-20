@@ -179,16 +179,17 @@
   }
 }
 
-
-
     async function searchVideo(query) {
-  const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q=${encodeURIComponent(query)}&maxResults=3`, {
+  const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q=${encodeURIComponent(query + ' official music video')}&maxResults=5`, {
     headers: { Authorization: `Bearer ${googleToken}` }
   });
+
   const data = await res.json();
+
   for (let item of data.items) {
     const title = item.snippet.title.toLowerCase();
     const id = item.id?.videoId;
+
     if (
       id &&
       !title.includes("mix") &&
@@ -198,10 +199,13 @@
       !title.includes("live") &&
       !title.includes("concert")
     ) {
-     if (!videoIds.includes(id)) return id;
+      return id;
     }
   }
+
   return null;
+}
+
 }
 
     async function createPlaylist(title) {
