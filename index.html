@@ -138,6 +138,9 @@
     };
 
     function buildQueries(artist, algorithm) {
+    const año = new Date().getFullYear();
+    const extras = ["official audio", "live", "remix", "versión acústica", "lyric video"];
+    const extra = extras[Math.floor(Math.random() * extras.length)];
   if (algorithm === "content") {
     return [
       `${artist} official music video`,
