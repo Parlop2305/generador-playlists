@@ -40,7 +40,7 @@
       '&response_type=token' +
       '&scope=' + encodeURIComponent(GOOGLE_SCOPES);
 
-    const SPOTIFY_CLIENT_ID = 'TU_CLIENT_ID_SPOTIFY';
+    const SPOTIFY_CLIENT_ID = 'si';
     const SPOTIFY_REDIRECT_URI = 'https://parlop2305.github.io/generador-playlists/';
     const SPOTIFY_SCOPES = [
       'playlist-modify-public',
@@ -89,6 +89,7 @@
 
     document.getElementById("generateBtn").onclick = async () => {
       console.log("Iniciando generación en YouTube...");
+      const uniqueIds = [...new Set(videoIds)];
       const artist = document.getElementById("artist").value;
       const algorithm = document.getElementById("algorithm").value;
       let queries = buildQueries(artist, algorithm);
@@ -141,31 +142,47 @@
       `${artist} official audio`,
       `${artist} song`,
       `${artist} single`,
-      `${artist} top hit`
+      `${artist} videoclip`
 ];
   } else if (algorithm === "collaborative") {
-    const perfiles = {
-      Sofía: ["Adele", "Taylor Swift", "Lana del Rey"],
-      Carlos: ["Linkin Park", "Imagine Dragons", "The Killers"],
-      Mariana: ["Bad Bunny", "Feid", "Karol G"]
-    };
+   const perfiles = {
+  Sofía: ["Adele", "Taylor Swift", "Lana del Rey"],
+  Carlos: ["Linkin Park", "Imagine Dragons", "The Killers"],
+  Mariana: ["Bad Bunny", "Feid", "Karol G"],
+  David: ["Kendrick Lamar", "Drake", "J. Cole"],
+  Elisa: ["Billie Eilish", "Olivia Rodrigo", "Halsey"],
+  Juan: ["Luis Miguel", "Camila", "Reik"]
+};
 
-    let match = Object.entries(perfiles).find(([_, artistas]) =>
-      artistas.some(a => artist.toLowerCase().includes(a.toLowerCase()))
-    );
+  let todosArtistas = Object.values(perfiles).flat();
+  let relacionados = todosArtistas.filter(a => a.toLowerCase().includes(artist.toLowerCase()));
 
-    let baseArtists = match ? match[1] : [artist, "Top Latin Hits", "Top 40"];
-    return baseArtists.map(a => `${a} trending songs`);
+  let finalArtists = relacionados.length > 0
+  ? relacionados
+  : [...new Set(todosArtistas)].sort(() => 0.5 - Math.random()).slice(0, 3);
+
+  return finalArtists.map(a => `${a} official music video`);
+
   } else {
     const año = new Date().getFullYear();
-    const extras = ["mix", "live", "official video", "versión acústica", "extended"];
+    const extras = ["official audio", "live", "remix", "versión acústica", "lyric video"];
     const extra = extras[Math.floor(Math.random() * extras.length)];
 
     return [
-      `Top music ${año}`,
-      `${artist} ${extra}`,
-      `Trending ${artist} songs ${año}`
-    ];
+    `Top music ${año}`,
+    `${artist} ${extra}`,
+    `Trending ${artist} ${año}`
+];
+
+  }
+}else {
+    return [
+      `Top global songs ${año}`,
+      `Top latino hits ${año}`,
+      `Top indie songs ${año}`
+    ].sort(() => 0.5 - Math.random()).slice(0, 2).concat([
+      `${artist} ${extra}`
+    ]);
   }
 }
 
@@ -187,7 +204,7 @@
       !title.includes("live") &&
       !title.includes("concert")
     ) {
-      return id;
+     if (!videoIds.includes(id)) return id;
     }
   }
   return null;
