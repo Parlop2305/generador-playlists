@@ -137,12 +137,12 @@
     function buildQueries(artist, algorithm) {
   if (algorithm === "content") {
     return [
-      `${artist} best hits`,
-      `${artist} top songs official`,
-      `${artist} greatest hits`,
-      `${artist} full album`,
-      `${artist} live performance`
-    ];
+      `${artist} official music video`,
+      `${artist} official audio`,
+      `${artist} song`,
+      `${artist} single`,
+      `${artist} top hit`
+];
   } else if (algorithm === "collaborative") {
     const perfiles = {
       Sofía: ["Adele", "Taylor Swift", "Lana del Rey"],
@@ -176,8 +176,19 @@
   });
   const data = await res.json();
   for (let item of data.items) {
+    const title = item.snippet.title.toLowerCase();
     const id = item.id?.videoId;
-    if (id) return id;
+    if (
+      id &&
+      !title.includes("mix") &&
+      !title.includes("album") &&
+      !title.includes("recopilación") &&
+      !title.includes("full") &&
+      !title.includes("live") &&
+      !title.includes("concert")
+    ) {
+      return id;
+    }
   }
   return null;
 }
