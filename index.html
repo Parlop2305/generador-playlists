@@ -128,10 +128,7 @@
       '&client_id=' + SPOTIFY_CLIENT_ID +
       '&redirect_uri=' + encodeURIComponent(SPOTIFY_REDIRECT_URI) +
       '&scope=' + encodeURIComponent(SPOTIFY_SCOPES.join(' '));
-
-    let googleToken = null;
-    let spotifyToken = null;
-
+    
     document.getElementById("authBtn").onclick = () => {
       localStorage.setItem("authSource", "google");
       console.log("Redirigiendo a Google:", googleAuthURL);
