@@ -251,15 +251,75 @@
 };
     
     document.getElementById("generateSpotifyBtn").onclick = async () => {
+  console.log("🎧 Generando playlist en Spotify...");
+
   const token = localStorage.getItem("spotifyToken");
+  const artist = document.getElementById("artist").value;
+  const algorithm = document.getElementById("algorithm").value;
+  const limit = parseInt(document.getElementById("trackCount").value);
+
   if (!token) {
-    alert("❌ Inicia sesión en Spotify primero");
+    alert("🔒 Primero inicia sesión en Spotify.");
     return;
   }
 
-  // Aquí va tu lógica de generación: buscar canciones, crear playlist, agregar URIs...
-  // Puedes usar lo que ya tenías o el bloque que ya implementamos antes.
+  let queries = buildQueries(artist, algorithm);
+  const trackUris = [];
+
+  for (let q of queries) {
+    const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    const data = await res.json();
+    const uri = data.tracks?.items?.[0]?.uri;
+    if (uri && !trackUris.includes(uri)) {
+      trackUris.push(uri);
+    }
+
+    if (trackUris.length >= limit) break;
+  }
+
+  const userRes = await fetch('https://api.spotify.com/v1/me', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  const userData = await userRes.json();
+  const userId = userData.id;
+
+  const playlistRes = await fetch(`https://api.spotify.com/v1/users/${userId}/playlists`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      name: `Playlist (${algorithm}) - ${artist}`,
+      description: "Generado automáticamente con PKCE",
+      public: false
+    })
+  });
+
+  const playlistData = await playlistRes.json();
+  const playlistId = playlistData.id;
+
+  await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      uris: trackUris
+    })
+  });
+
+  document.getElementById("playlistLink").innerHTML =
+    `✅ Playlist creada en Spotify con ${trackUris.length} canciones: <a href="https://open.spotify.com/playlist/${playlistId}" target="_blank">Ver Playlist</a>`;
 };
+
 
 
   document.getElementById("spotifyBtn").onclick = async () => {
