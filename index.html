@@ -329,6 +329,16 @@ async function searchVideo(query) {
   return null;
 }
 
+    async function validateSpotifyToken() {
+  const res = await fetch('https://api.spotify.com/v1/me', {
+    headers: {
+      Authorization: `Bearer ${spotifyToken}`
+    }
+  });
+  const data = await res.json();
+  console.log("👤 Usuario conectado en Spotify:", data.display_name);
+}
+
     async function createPlaylist(title) {
       const res = await fetch('https://www.googleapis.com/youtube/v3/playlists?part=snippet,status', {
         method: 'POST',
