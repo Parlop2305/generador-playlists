@@ -155,7 +155,7 @@
       spotifyToken = token;
       document.getElementById("generateSpotifyBtn").disabled = false;
     }
-    window.history.replaceState({}, document.title, window.location.pathname);
+    window.history.replaceState({}, document.title, window.location.pathname);    
   }
 
   // Spotify PKCE flow
@@ -248,6 +248,17 @@
 
       document.getElementById("playlistLink").innerHTML =
         `✅ Playlist creada en YouTube con ${videoIds.length} canciones: <a href="https://www.youtube.com/playlist?list=${playlistId}" target="_blank">Ver</a>`;
+};
+    
+    document.getElementById("generateSpotifyBtn").onclick = async () => {
+  const token = localStorage.getItem("spotifyToken");
+  if (!token) {
+    alert("❌ Inicia sesión en Spotify primero");
+    return;
+  }
+
+  // Aquí va tu lógica de generación: buscar canciones, crear playlist, agregar URIs...
+  // Puedes usar lo que ya tenías o el bloque que ya implementamos antes.
 };
 
 
