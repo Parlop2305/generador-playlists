@@ -363,26 +363,7 @@ async function searchVideo(query) {
         })
       });
     }
-    async function validateSpotifyToken() {
-  const statusText = document.getElementById("spotifyStatus");
-
-  try {
-    const res = await fetch('https://api.spotify.com/v1/me', {
-      headers: { Authorization: `Bearer ${spotifyToken}` }
-    });
-
-    if (!res.ok) {
-      statusText.textContent = "❌ Error al conectar con Spotify.";
-      return;
-    }
-
-    const data = await res.json();
-    statusText.textContent = `✅ Conectado como: ${data.display_name}`;
-  } catch (err) {
-    console.error("Error validando token de Spotify:", err);
-    statusText.textContent = "⚠️ Falló la conexión con Spotify.";
-  }
-}
+    
 
     async function searchSpotifyTracks(query) {
       const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=1`, {
@@ -427,6 +408,26 @@ async function searchVideo(query) {
         body: JSON.stringify({ uris: trackUris })
       });
     }
+    async function validateSpotifyToken() {
+  const statusText = document.getElementById("spotifyStatus");
+
+  try {
+    const res = await fetch('https://api.spotify.com/v1/me', {
+      headers: { Authorization: `Bearer ${spotifyToken}` }
+    });
+
+    if (!res.ok) {
+      statusText.textContent = "❌ Error al conectar con Spotify.";
+      return;
+    }
+
+    const data = await res.json();
+    statusText.textContent = `✅ Conectado como: ${data.display_name}`;
+  } catch (err) {
+    console.error("Error validando token de Spotify:", err);
+    statusText.textContent = "⚠️ Falló la conexión con Spotify.";
+  }
+}
     document.getElementById("trackCount").addEventListener("input", function () {
     document.getElementById("trackCountValue").textContent = this.value;
     document.getElementById("validateSpotifyBtn").onclick = validateSpotifyToken;
