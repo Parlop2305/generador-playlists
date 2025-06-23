@@ -5,19 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Generador de Playlists</title>
   <style>
-    body {
+    <body> {
       font-family: 'Segoe UI', sans-serif;
       background: linear-gradient(to right, #141e30, #243b55);
       color: #fff;
       padding: 20px;
       text-align: center;
     }
-
     h1 {
       font-size: 2rem;
       margin-bottom: 20px;
     }
-
     .container {
       max-width: 400px;
       margin: auto;
@@ -26,14 +24,12 @@
       border-radius: 15px;
       box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
     }
-
     label {
       display: block;
       margin-top: 15px;
       text-align: left;
       font-weight: bold;
     }
-
     input, select, button {
       width: 100%;
       padding: 12px;
@@ -43,12 +39,10 @@
       border-radius: 8px;
       font-size: 16px;
     }
-
     input, select {
       background: #f0f0f0;
       color: #333;
     }
-
     button {
       background: #1db954;
       color: white;
@@ -59,24 +53,19 @@
       opacity: 0.5;
       cursor: not-allowed;
     }
-
     button:hover {
       background: #17a14b;
     }
-
     #playlistLink {
       margin-top: 20px;
       font-weight: bold;
     }
-
     a {
       color: #1db954;
       text-decoration: underline;
     }
-   
   </style>
 </head>
-
 <body>
   <div class="container">
     <h1>🎵 Generador de Playlists</h1>
@@ -90,375 +79,21 @@
       <option value="collaborative">🧠 Colaborativo simulado</option>
       <option value="random">🎲 Popularidad + aleatorio</option>
     </select>
-      <label for="trackCount">🎚️ Número de canciones:</label>
-      <input type="range" id="trackCount" min="5" max="20" value="10" step="1" />
+
+    <label for="trackCount">🎚️ Número de canciones:</label>
+    <input type="range" id="trackCount" min="5" max="20" value="10" step="1" />
     <span id="trackCountValue">10</span> canciones
 
     <button id="authBtn">🔑 Iniciar sesión con Google</button>
-    <button id="spotifyBtn">🟢 Iniciar sesión con Spotify</button>
+    <button id="spotifyPKCEBtn">🟢 Iniciar sesión con Spotify (PKCE)</button>
     <button id="generateBtn" disabled>🎶 Crear Playlist (YouTube)</button>
     <button id="generateSpotifyBtn" disabled>🎶 Crear Playlist (Spotify)</button>
     <button id="validateSpotifyBtn" disabled>🔍 Probar conexión con Spotify</button>
-<p id="spotifyStatus"></p>
+    <p id="spotifyStatus"></p>
 
     <div id="playlistLink"></div>
   </div>
 
-  <script>
-    const GOOGLE_CLIENT_ID = '743111186567-mfqinhq9np4q2vdpe3otkrboacquoqee.apps.googleusercontent.com';
-    const GOOGLE_REDIRECT_URI = 'https://parlop2305.github.io/generador-playlists/';
-    const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/youtube';
-    const googleAuthURL =
-      'https://accounts.google.com/o/oauth2/v2/auth' +
-      '?client_id=' + GOOGLE_CLIENT_ID +
-      '&redirect_uri=' + encodeURIComponent(GOOGLE_REDIRECT_URI) +
-      '&response_type=token' +
-      '&scope=' + encodeURIComponent(GOOGLE_SCOPES);
-
-    const SPOTIFY_CLIENT_ID = '5e1d32a3e54b4fb1ba42be6b643162ea';
-    const SPOTIFY_REDIRECT_URI = 'https://parlop2305.github.io/generador-playlists/';
-    const SPOTIFY_SCOPES = [
-      'playlist-modify-public',
-      'playlist-modify-private',
-      'user-read-private'
-    ];
-    const spotifyAuthURL =
-      'https://accounts.spotify.com/authorize' +
-      '?response_type=token' +
-      '&client_id=' + SPOTIFY_CLIENT_ID +
-      '&redirect_uri=' + encodeURIComponent(SPOTIFY_REDIRECT_URI) +
-      '&scope=' + encodeURIComponent(SPOTIFY_SCOPES.join(' '));
-    
-    document.getElementById("authBtn").onclick = () => {
-      localStorage.setItem("authSource", "google");
-      console.log("Redirigiendo a Google:", googleAuthURL);
-      window.location.href = googleAuthURL;
-    };
-
-    document.getElementById("spotifyBtn").onclick = () => {
-      localStorage.setItem("authSource", "spotify");
-      console.log("Redirigiendo a Spotify:", spotifyAuthURL);
-      window.location.href = spotifyAuthURL;
-    };
-
-  // Almacenar tokens globalmente
-let googleToken = null;
-let spotifyToken = null;
-
-// Recuperar token de Spotify si ya existe en localStorage
-if (localStorage.getItem("spotifyToken")) {
-  spotifyToken = localStorage.getItem("spotifyToken");
-  document.getElementById("generateSpotifyBtn").disabled = false;
-  document.getElementById("validateSpotifyBtn").disabled = false;
-  console.log("Token de Spotify recuperado de localStorage.");
-}
-
-window.addEventListener('load', function () {
-  const hash = window.location.hash;
-  console.log("URL HASH:", hash); // útil para depurar
-
-  if (hash.includes('access_token')) {
-    const token = new URLSearchParams(hash.substring(1)).get('access_token');
-    const source = localStorage.getItem("authSource");
-
-    if (source === "google") {
-      googleToken = token;
-      console.log("Google token cargado:", googleToken);
-      document.getElementById("generateBtn").disabled = false;
-
-    } else if (source === "spotify") {
-      spotifyToken = token;
-      localStorage.setItem("spotifyToken", token); // <- ¡GUARDAR TOKEN!
-      console.log("Spotify token cargado:", spotifyToken);
-      document.getElementById("generateSpotifyBtn").disabled = false;
-      document.getElementById("validateSpotifyBtn").disabled = false;
-    }
-
-    // Limpia la URL del hash para que no se vea feo
-    window.history.replaceState({}, document.title, window.location.pathname);
-  }
-});
-
-    document.getElementById("generateBtn").onclick = async () => {
-      console.log("🎬 Generando playlist en YouTube...");
-      const limit = parseInt(document.getElementById("trackCount").value);
-      const artist = document.getElementById("artist").value;
-      const algorithm = document.getElementById("algorithm").value;
-      let queries = buildQueries(artist, algorithm);
-
-      const videoIds = [];
-
-      for (let query of queries) {
-        const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q=${encodeURIComponent(query)}&maxResults=5`, {
-          headers: { Authorization: `Bearer ${googleToken}` }
-        });
-
-        if (!res.ok) {
-          console.warn("Error al buscar:", query, res.status);
-          continue;
-        }
-
-        const data = await res.json();
-        if (!data.items || !Array.isArray(data.items)) continue;
-
-        for (let item of data.items) {
-          const title = item.snippet.title.toLowerCase();
-          const id = item.id?.videoId;
-    
-          if (
-            id &&
-            !title.includes("mix") &&
-            !title.includes("album") &&
-            !title.includes("recopilación") &&
-            !title.includes("full") &&
-            !title.includes("live") &&
-            !title.includes("concert") &&
-            !videoIds.includes(id)
-          ) {
-            videoIds.push(id);
-          }
-
-          if (videoIds.length >= limit) break;
-        }
-
-      if (videoIds.length >= limit) break;
-      }
-    
-      if (videoIds.length === 0) {
-        document.getElementById("playlistLink").innerHTML =
-          "⚠️ No se encontraron canciones. Intenta con otro artista.";
-        return;
-      }
-
-      const playlistId = await createPlaylist(`Playlist (${algorithm}) - ${artist}`);
-
-      for (let videoId of videoIds) {
-        await addVideoToPlaylist(playlistId, videoId);
-      }
-
-      document.getElementById("playlistLink").innerHTML =
-        `✅ Playlist creada en YouTube con ${videoIds.length} canciones: <a href="https://www.youtube.com/playlist?list=${playlistId}" target="_blank">Ver</a>`;
-};
-
-
-    document.getElementById("generateSpotifyBtn").onclick = async () => {
-      console.log("Iniciando generación en Spotify...");
-      
-      const artist = document.getElementById("artist").value;
-      const algorithm = document.getElementById("algorithm").value;
-      let queries = buildQueries(artist, algorithm);
-
-      const trackUris = [];
-      for (let q of queries) {
-        const uri = await searchSpotifyTracks(q);
-        console.log("Búsqueda Spotify:", q, "→", uri);
-        if (uri) trackUris.push(uri);
-      }
-
-      const userId = await getSpotifyUserId();
-      console.log("Spotify User ID:", userId);
-      const playlistId = await createSpotifyPlaylist(userId, `Playlist (${algorithm}) - ${artist}`);
-      console.log("Spotify Playlist ID:", playlistId);
-      await addTracksToSpotifyPlaylist(playlistId, trackUris);
-
-      document.getElementById("playlistLink").innerHTML =
-        `✅ Playlist creada en Spotify: <a href="https://open.spotify.com/playlist/${playlistId}" target="_blank">Ver</a>`;
-    };
-
-    function buildQueries(artist, algorithm) {
-    const año = new Date().getFullYear();
-    const extras = ["official audio", "live", "remix", "versión acústica", "lyric video"];
-    const extra = extras[Math.floor(Math.random() * extras.length)];
-  if (algorithm === "content") {
-    return [
-      `${artist} official music video`,
-      `${artist} official audio`,
-      `${artist} song`,
-      `${artist} single`,
-      `${artist} videoclip`
-];
-  } else if (algorithm === "collaborative") {
-   const perfiles = {
-  Sofía: ["Adele", "Taylor Swift", "Lana del Rey"],
-  Carlos: ["Linkin Park", "Imagine Dragons", "The Killers"],
-  Mariana: ["Bad Bunny", "Feid", "Karol G"],
-  David: ["Kendrick Lamar", "Drake", "J. Cole"],
-  Elisa: ["Billie Eilish", "Olivia Rodrigo", "Halsey"],
-  Juan: ["Luis Miguel", "Camila", "Reik"]
-};
-
-  let todosArtistas = Object.values(perfiles).flat();
-  let relacionados = todosArtistas.filter(a => a.toLowerCase().includes(artist.toLowerCase()));
-
-  let finalArtists = relacionados.length > 0
-  ? relacionados
-  : [...new Set(todosArtistas)].sort(() => 0.5 - Math.random()).slice(0, 3);
-
-  return finalArtists.map(a => `${a} official music video`);
-
-  } else {
-    return [
-      `Top global songs ${año}`,
-      `Top latino hits ${año}`,
-      `Top indie songs ${año}`
-    ].sort(() => 0.5 - Math.random()).slice(0, 2).concat([
-      `${artist} ${extra}`
-    ]);
-  }
-}
-
-async function searchVideo(query) {
-  try {
-    const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q=${encodeURIComponent(query + ' official music video')}&maxResults=5`, {
-      headers: { Authorization: `Bearer ${googleToken}` }
-    });
-
-    if (!res.ok) {
-      console.error("Error en la API de YouTube:", res.status);
-      return null;
-    }
-
-    const data = await res.json();
-
-    if (!data.items || !Array.isArray(data.items)) {
-      console.warn("Respuesta inesperada de YouTube:", data);
-      return null;
-    }
-
-    for (let item of data.items) {
-      const title = item.snippet.title.toLowerCase();
-      const id = item.id?.videoId;
-
-      if (
-        id &&
-        !title.includes("mix") &&
-        !title.includes("album") &&
-        !title.includes("recopilación") &&
-        !title.includes("full") &&
-        !title.includes("live") &&
-        !title.includes("concert")
-      ) {
-        return id;
-      }
-    }
-  } catch (err) {
-    console.error("Error en searchVideo:", err);
-  }
-
-  return null;
-}
-    
-    async function createPlaylist(title) {
-      const res = await fetch('https://www.googleapis.com/youtube/v3/playlists?part=snippet,status', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${googleToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          snippet: { title: title, description: 'Generado automáticamente' },
-          status: { privacyStatus: 'private' }
-        })
-      });
-      const data = await res.json();
-      return data.id;
-    }
-
-    async function addVideoToPlaylist(playlistId, videoId) {
-      await fetch('https://www.googleapis.com/youtube/v3/playlistItems?part=snippet', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${googleToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          snippet: {
-            playlistId: playlistId,
-            resourceId: { kind: "youtube#video", videoId: videoId }
-          }
-        })
-      });
-    }
-    
-
-    async function searchSpotifyTracks(query) {
-      const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=1`, {
-        headers: { Authorization: `Bearer ${spotifyToken}` }
-      });
-      const data = await res.json();
-      return data.tracks?.items?.[0]?.uri || null;
-    }
-
-    async function getSpotifyUserId() {
-      const res = await fetch('https://api.spotify.com/v1/me', {
-        headers: { Authorization: `Bearer ${spotifyToken}` }
-      });
-      const data = await res.json();
-      return data.id;
-    }
-
-    async function createSpotifyPlaylist(userId, name) {
-      const res = await fetch(`https://api.spotify.com/v1/users/${userId}/playlists`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${spotifyToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          name: name,
-          description: 'Generado automáticamente',
-          public: false
-        })
-      });
-      const data = await res.json();
-      return data.id;
-    }
-
-    async function addTracksToSpotifyPlaylist(playlistId, trackUris) {
-      await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${spotifyToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ uris: trackUris })
-      });
-    }
-    async function validateSpotifyToken() {
-  const statusText = document.getElementById("spotifyStatus");
-
-  try {
-    const res = await fetch('https://api.spotify.com/v1/me', {
-      headers: { Authorization: `Bearer ${spotifyToken}` }
-    });
-
-    if (!res.ok) {
-      statusText.textContent = "❌ Error al conectar con Spotify.";
-      return;
-    }
-
-    const data = await res.json();
-    statusText.textContent = `✅ Conectado como: ${data.display_name}`;
-  } catch (err) {
-    console.error("Error validando token de Spotify:", err);
-    statusText.textContent = "⚠️ Falló la conexión con Spotify.";
-  }
-}
-    document.getElementById("trackCount").addEventListener("input", function () {
-    document.getElementById("trackCountValue").textContent = this.value;
-    
-});
-    document.getElementById("validateSpotifyBtn").onclick = validateSpotifyToken;
-    if (spotifyToken) {
-  fetch('https://api.spotify.com/v1/me', {
-    headers: {
-      Authorization: `Bearer ${spotifyToken}`
-    }
-  })
-  .then(res => res.json())
-  .then(data => console.log("🎧 Usuario de Spotify:", data))
-  .catch(err => console.error("❌ Error al obtener perfil de Spotify", err));
-}
-  </script>
+  <script src="./main.js"></script>
 </body>
 </html>
