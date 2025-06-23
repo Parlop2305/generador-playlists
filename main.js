@@ -4,6 +4,13 @@
 const GOOGLE_CLIENT_ID = '743111186567-mfqinhq9np4q2vdpe3otkrboacquoqee.apps.googleusercontent.com';
 const GOOGLE_REDIRECT_URI = 'https://parlop2305.github.io/generador-playlists/';
 const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/youtube';
+const googleAuthURL =
+      'https://accounts.google.com/o/oauth2/v2/auth' +
+      '?client_id=' + GOOGLE_CLIENT_ID +
+      '&redirect_uri=' + encodeURIComponent(GOOGLE_REDIRECT_URI) +
+      '&response_type=token' +
+      '&scope=' + encodeURIComponent(GOOGLE_SCOPES);
+
 const SPOTIFY_CLIENT_ID = '5e1d32a3e54b4fb1ba42be6b643162ea';
 const SPOTIFY_REDIRECT_URI = 'https://parlop2305.github.io/generador-playlists/';
 const SPOTIFY_SCOPES = [
