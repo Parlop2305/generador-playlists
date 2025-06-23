@@ -144,24 +144,43 @@
       window.location.href = spotifyAuthURL;
     };
 
-    window.addEventListener('load', function () {
-      const hash = window.location.hash;
-      if (hash.includes('access_token')) {
-        const token = new URLSearchParams(hash.substring(1)).get('access_token');
-        const source = localStorage.getItem("authSource");
-        if (source === "google") {
-          googleToken = token;
-          console.log("Google token cargado:", googleToken);
-          document.getElementById("generateBtn").disabled = false;
-        } else if (source === "spotify") {
-            spotifyToken = token;
-            console.log("Spotify token cargado:", spotifyToken);
-            document.getElementById("generateSpotifyBtn").disabled = false;
-            document.getElementById("validateSpotifyBtn").disabled = false; // <--- nuevo
+  // Almacenar tokens globalmente
+let googleToken = null;
+let spotifyToken = null;
+
+// Recuperar token de Spotify si ya existe en localStorage
+if (localStorage.getItem("spotifyToken")) {
+  spotifyToken = localStorage.getItem("spotifyToken");
+  document.getElementById("generateSpotifyBtn").disabled = false;
+  document.getElementById("validateSpotifyBtn").disabled = false;
+  console.log("Token de Spotify recuperado de localStorage.");
+}
+
+window.addEventListener('load', function () {
+  const hash = window.location.hash;
+  console.log("URL HASH:", hash); // útil para depurar
+
+  if (hash.includes('access_token')) {
+    const token = new URLSearchParams(hash.substring(1)).get('access_token');
+    const source = localStorage.getItem("authSource");
+
+    if (source === "google") {
+      googleToken = token;
+      console.log("Google token cargado:", googleToken);
+      document.getElementById("generateBtn").disabled = false;
+
+    } else if (source === "spotify") {
+      spotifyToken = token;
+      localStorage.setItem("spotifyToken", token); // <- ¡GUARDAR TOKEN!
+      console.log("Spotify token cargado:", spotifyToken);
+      document.getElementById("generateSpotifyBtn").disabled = false;
+      document.getElementById("validateSpotifyBtn").disabled = false;
     }
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-    });
+
+    // Limpia la URL del hash para que no se vea feo
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+});
 
     document.getElementById("generateBtn").onclick = async () => {
       console.log("🎬 Generando playlist en YouTube...");
