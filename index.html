@@ -105,26 +105,7 @@
     <div id="playlistLink"></div>
   </div>
 
-  <script>
-
-function sortByNameAlphabetically(tracks) {
-      return [...tracks].sort((a, b) => a.name.localeCompare(b.name));
-    }
-    function bubbleSortByDuration(tracks) {
-      const arr = [...tracks];
-      for (let i = 0; i < arr.length - 1; i++) {
-        for (let j = 0; j < arr.length - 1 - i; j++) {
-          if (arr[j].duration_ms > arr[j + 1].duration_ms) {
-            [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
-          }
-        }
-      }
-      return arr;
-    }
-    function sortByPopularityAsc(tracks) {
-      return [...tracks].sort((a, b) => a.popularity - b.popularity);
-    }
-    
+  <script> 
     const GOOGLE_CLIENT_ID = '743111186567-mfqinhq9np4q2vdpe3otkrboacquoqee.apps.googleusercontent.com';
     const GOOGLE_REDIRECT_URI = 'https://parlop2305.github.io/generador-playlists/';
     const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/youtube';
@@ -553,6 +534,23 @@ async function generateCodeChallenge(codeVerifier) {
     .replace(/\//g, '_')
     .replace(/=+$/, '');
 }
+    function sortByNameAlphabetically(tracks) {
+      return [...tracks].sort((a, b) => a.name.localeCompare(b.name));
+    }
+    function bubbleSortByDuration(tracks) {
+      const arr = [...tracks];
+      for (let i = 0; i < arr.length - 1; i++) {
+        for (let j = 0; j < arr.length - 1 - i; j++) {
+          if (arr[j].duration_ms > arr[j + 1].duration_ms) {
+            [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
+          }
+        }
+      }
+      return arr;
+    }
+    function sortByPopularityAsc(tracks) {
+      return [...tracks].sort((a, b) => a.popularity - b.popularity);
+    }
   </script>
 </body>
 </html>
