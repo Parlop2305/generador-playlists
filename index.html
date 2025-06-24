@@ -136,11 +136,19 @@
       window.location.href = googleAuthURL;
     };
 
-    document.getElementById("spotifyBtn").onclick = () => {
-      sessionStorage.setItem("authSource", "spotify");
-      console.log("Redirigiendo a Spotify:", spotifyAuthURL);
-      window.location.href = spotifyAuthURL;
-    };
+   document.getElementById("spotifyBtn").onclick = async () => {
+  const verifier = generateCodeVerifier(); // Genera el code_verifier
+  const challenge = await generateCodeChallenge(verifier); // Genera el code_challenge
+
+  // Guarda solo el verifier en sessionStorage
+  sessionStorage.setItem('spotify_code_verifier', verifier);
+
+  // Construye la URL de autenticación
+  const authUrl = `https://accounts.spotify.com/authorize?client_id=${SPOTIFY_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(SPOTIFY_REDIRECT_URI)}&code_challenge_method=S256&code_challenge=${challenge}&scope=playlist-modify-public playlist-modify-private user-read-private`;
+
+  // Redirige al usuario a la autenticación de Spotify
+  window.location.href = authUrl;
+};
 
     window.addEventListener('load', async function () {
   const hash = window.location.hash;
