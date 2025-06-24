@@ -258,7 +258,7 @@
     document.getElementById("generateSpotifyBtn").onclick = async () => {
   console.log("🎧 Generando playlist en Spotify...");
 
-  const token = sessionStorage.setItem("spotifyToken");
+  const token = sessionStorage.getItem("spotifyToken");
   const artist = document.getElementById("artist").value;
   const algorithm = document.getElementById("algorithm").value;
   const limit = parseInt(document.getElementById("trackCount").value);
