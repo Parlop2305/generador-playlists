@@ -166,7 +166,7 @@
   // Spotify PKCE flow
   const params = new URLSearchParams(window.location.search);
   const code = params.get('code');
-  const verifier = sessionStorage.setItem('spotify_code_verifier');
+  const verifier = sessionStorage.setItem('spotify_code_verifier', verifier);
   if (code && verifier) {
     const body = new URLSearchParams({
       grant_type: 'authorization_code',
