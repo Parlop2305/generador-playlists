@@ -285,7 +285,7 @@
   let rawTracks = [];
 
 for (let q of queries) {
-  const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`, {
+  const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=5`, {
     headers: {
       Authorization: `Bearer ${token}`
     }
