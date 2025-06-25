@@ -557,17 +557,27 @@ async function generateCodeChallenge(codeVerifier) {
     .replace(/=+$/, '');
 }
 
-    function applySortingIfNeeded(items, type) {
-      const sortType = document.getElementById('sort').value;
-      if (sortType === 'title') {
-        return items.sort((a, b) => a.title.localeCompare(b.title));
-      } else if (sortType === 'duration') {
-        return bubbleSortByKey(items, 'duration');
-      } else if (sortType === 'popularity') {
-        return items.sort((a, b) => a.popularity - b.popularity);
-      }
-      return items;
-    }
+    function applySortingIfNeeded(items, platform) {
+  const sortType = document.getElementById('sort').value;
+
+  if (sortType === 'title') {
+    return items.sort((a, b) => {
+      const titleA = platform === 'spotify' ? a.name : a.title;
+      const titleB = platform === 'spotify' ? b.name : b.title;
+      return titleA.localeCompare(titleB);
+    });
+  }
+
+  if (sortType === 'duration') {
+    return bubbleSortByKey(items, platform === 'spotify' ? 'duration_ms' : 'duration');
+  }
+
+  if (sortType === 'popularity') {
+    return items.sort((a, b) => a.popularity - b.popularity);
+  }
+
+  return items;
+}
 
     function bubbleSortByKey(arr, key) {
       let n = arr.length;
