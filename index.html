@@ -89,9 +89,13 @@
       <option value="content">🎯 Basado en contenido</option>
       <option value="collaborative">🧠 Colaborativo simulado</option>
       <option value="random">🎲 Popularidad + aleatorio</option>
-      <option value="bubble">🫧 Burbuja por duración</option>
-      <option value="az">🔤 Alfabético A-Z</option>
-      <option value="popular">📊 Popularidad ascendente</option>
+    </select>
+    <label for="sort">Ordenar por:</label>
+    <select id="sort">
+      <option value="none">Sin orden</option>
+      <option value="title">🔤 Título (A-Z)</option>
+      <option value="duration">🫧 Duración</option>
+      <option value="popularity">📊 Popularidad</option>
     </select>
       <label for="trackCount">🎚️ Número de canciones:</label>
       <input type="range" id="trackCount" min="5" max="20" value="10" step="1" />
@@ -204,58 +208,67 @@
       const algorithm = document.getElementById("algorithm").value;
       let queries = buildQueries(artist, algorithm);
 
-      const videoIds = [];
+      let queries = buildQueries(artist, algorithm);
+  let rawVideos = [];
 
-      for (let query of queries) {
-        const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q=${encodeURIComponent(query)}&maxResults=5`, {
-          headers: { Authorization: `Bearer ${googleToken}` }
+  for (let query of queries) {
+    const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q=${encodeURIComponent(query)}&maxResults=5`, {
+      headers: { Authorization: `Bearer ${googleToken}` }
+    });
+
+    if (!res.ok) {
+      console.warn("Error al buscar:", query, res.status);
+      continue;
+    }
+
+    const data = await res.json();
+    if (!data.items || !Array.isArray(data.items)) continue;
+
+    for (let item of data.items) {
+      const title = item.snippet.title.toLowerCase();
+      const id = item.id?.videoId;
+
+      if (
+        id &&
+        !title.includes("mix") &&
+        !title.includes("album") &&
+        !title.includes("recopilación") &&
+        !title.includes("full") &&
+        !title.includes("live") &&
+        !title.includes("concert") &&
+        !rawVideos.find(v => v.id === id)
+      ) {
+        rawVideos.push({
+          id: id,
+          title: item.snippet.title
         });
-
-        if (!res.ok) {
-          console.warn("Error al buscar:", query, res.status);
-          continue;
-        }
-
-        const data = await res.json();
-        if (!data.items || !Array.isArray(data.items)) continue;
-
-        for (let item of data.items) {
-          const title = item.snippet.title.toLowerCase();
-          const id = item.id?.videoId;
-    
-          if (
-            id &&
-            !title.includes("mix") &&
-            !title.includes("album") &&
-            !title.includes("recopilación") &&
-            !title.includes("full") &&
-            !title.includes("live") &&
-            !title.includes("concert") &&
-            !videoIds.includes(id)
-          ) {
-            videoIds.push(id);
-          }
-
-          if (videoIds.length >= limit) break;
-        }
-
-      if (videoIds.length >= limit) break;
-      }
-    
-      if (videoIds.length === 0) {
-        document.getElementById("playlistLink").innerHTML =
-          "⚠️ No se encontraron canciones. Intenta con otro artista.";
-        return;
       }
 
-      const playlistId = await createPlaylist(`Playlist (${algorithm}) - ${artist}`);
+      if (rawVideos.length >= limit) break;
+    }
 
-      for (let videoId of videoIds) {
-        await addVideoToPlaylist(playlistId, videoId);
-      }
+    if (rawVideos.length >= limit) break;
+  }
 
-      document.getElementById("playlistLink").innerHTML =
-        `✅ Playlist creada en YouTube con ${videoIds.length} canciones: <a href="https://www.youtube.com/playlist?list=${playlistId}" target="_blank">Ver</a>`;
+  if (rawVideos.length === 0) {
+    document.getElementById("playlistLink").innerHTML =
+      "⚠️ No se encontraron canciones. Intenta con otro artista.";
+    return;
+  }
+
+  // 🧠 Aplicar ordenamiento solo por título en YouTube
+  if (sortType === "title") {
+    rawVideos.sort((a, b) => a.title.localeCompare(b.title));
+  }
+
+  const playlistId = await createPlaylist(`Playlist (${algorithm}) - ${artist}`);
+
+  for (let vid of rawVideos) {
+    await addVideoToPlaylist(playlistId, vid.id);
+  }
+
+  document.getElementById("playlistLink").innerHTML =
+    `✅ Playlist creada en YouTube con ${rawVideos.length} canciones: <a href="https://www.youtube.com/playlist?list=${playlistId}" target="_blank">Ver</a>`;
 };
     
     document.getElementById("generateSpotifyBtn").onclick = async () => {
@@ -272,23 +285,33 @@
   }
 
   let queries = buildQueries(artist, algorithm);
-  const trackUris = [];
+  let rawTracks = [];
 
-  for (let q of queries) {
-    const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-
-    const data = await res.json();
-    const uri = data.tracks?.items?.[0]?.uri;
-    if (uri && !trackUris.includes(uri)) {
-      trackUris.push(uri);
+for (let q of queries) {
+  const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`, {
+    headers: {
+      Authorization: `Bearer ${token}`
     }
+  });
 
-    if (trackUris.length >= limit) break;
+  const data = await res.json();
+  const item = data.tracks?.items?.[0];
+  if (item && !rawTracks.find(t => t.uri === item.uri)) {
+    rawTracks.push({
+      uri: item.uri,
+      title: item.name,
+      duration: item.duration_ms,
+      popularity: item.popularity
+    });
   }
+
+  if (rawTracks.length >= limit) break;
+}
+
+// APLICAR ORDENAMIENTO
+rawTracks = applySortingIfNeeded(rawTracks, 'spotify');
+const trackUris = rawTracks.map(t => t.uri);
+      
 
   const userRes = await fetch('https://api.spotify.com/v1/me', {
     headers: { Authorization: `Bearer ${token}` }
@@ -534,23 +557,38 @@ async function generateCodeChallenge(codeVerifier) {
     .replace(/\//g, '_')
     .replace(/=+$/, '');
 }
-    function sortByNameAlphabetically(tracks) {
-      return [...tracks].sort((a, b) => a.name.localeCompare(b.name));
+
+    function applySortingIfNeeded(items, type) {
+      const sortType = document.getElementById('sort').value;
+      if (sortType === 'title') {
+        return items.sort((a, b) => a.title.localeCompare(b.title));
+      } else if (sortType === 'duration') {
+        return bubbleSortByKey(items, 'duration');
+      } else if (sortType === 'popularity') {
+        return items.sort((a, b) => a.popularity - b.popularity);
+      }
+      return items;
     }
-    function bubbleSortByDuration(tracks) {
-      const arr = [...tracks];
-      for (let i = 0; i < arr.length - 1; i++) {
-        for (let j = 0; j < arr.length - 1 - i; j++) {
-          if (arr[j].duration_ms > arr[j + 1].duration_ms) {
-            [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
+
+    function bubbleSortByKey(arr, key) {
+      let n = arr.length;
+      let swapped;
+      do {
+        swapped = false;
+        for (let i = 0; i < n - 1; i++) {
+          if (arr[i][key] > arr[i + 1][key]) {
+            [arr[i], arr[i + 1]] = [arr[i + 1], arr[i]];
+            swapped = true;
           }
         }
-      }
+        n--;
+      } while (swapped);
       return arr;
     }
-    function sortByPopularityAsc(tracks) {
-      return [...tracks].sort((a, b) => a.popularity - b.popularity);
-    }
+
+    document.getElementById("trackCount").addEventListener("input", function () {
+      document.getElementById("trackCountValue").textContent = this.value;
+    });
   </script>
 </body>
 </html>
