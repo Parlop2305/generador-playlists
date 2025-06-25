@@ -247,25 +247,24 @@
     if (rawVideos.length >= limit) break;
   }
 
-  // ✅ Aplicar ordenamiento solo por título para YouTub
-  if (sortType === "title") {
-    rawVideos.sort((a, b) => a.title.localeCompare(b.title));
-  }
-
   if (rawVideos.length === 0) {
     document.getElementById("playlistLink").innerHTML =
       "⚠️ No se encontraron canciones. Intenta con otro artista.";
     return;
   }
-
+      if (sortType === "title") {
+    rawVideos.sort((a, b) => a.title.localeCompare(b.title));
+  }
+  
+  const videoIds = rawVideos.slice(0, limit).map(v => v.id);
   const playlistId = await createPlaylist(`Playlist (${algorithm}) - ${artist}`);
 
-  for (let video of rawVideos) {
-    await addVideoToPlaylist(playlistId, video.id);
+  for (let videoId of videoIds) {
+    await addVideoToPlaylist(playlistId, videoId);
   }
 
   document.getElementById("playlistLink").innerHTML =
-    `✅ Playlist creada en YouTube con ${rawVideos.length} canciones: <a href="https://www.youtube.com/playlist?list=${playlistId}" target="_blank">Ver</a>`;
+    `✅ Playlist creada en YouTube con ${videoIds.length} canciones: <a href="https://www.youtube.com/playlist?list=${playlistId}" target="_blank">Ver</a>`;
 };
     
     document.getElementById("generateSpotifyBtn").onclick = async () => {
