@@ -292,17 +292,17 @@ for (let q of queries) {
   });
 
   const data = await res.json();
-  const item = data.tracks?.items?.[0];
-  if (item && !rawTracks.find(t => t.uri === item.uri)) {
-    rawTracks.push({
-      uri: item.uri,
-      title: item.name,
-      duration: item.duration_ms,
-      popularity: item.popularity
-    });
+  const tracks = data.tracks?.items || [];
+
+  for (let track of tracks) {
+    const uri = track.uri;
+    if (uri && !trackUris.includes(uri)) {
+      trackUris.push(uri);
+    }
+    if (trackUris.length >= limit) break;
   }
 
-  if (rawTracks.length >= limit) break;
+  if (trackUris.length >= limit) break;
 }
 
 // APLICAR ORDENAMIENTO
