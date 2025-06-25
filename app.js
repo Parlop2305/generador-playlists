@@ -25,7 +25,7 @@ const GOOGLE_CLIENT_ID = '743111186567-mfqinhq9np4q2vdpe3otkrboacquoqee.apps.goo
     let googleToken = null;
     let spotifyToken = null;
 
-    document.getElementById("authBtn").onclick = () => {
+    document.getElementById("authBtn").onclick = async () => {
       localStorage.setItem("authSource", "google");
       console.log("Redirigiendo a Google:", googleAuthURL);
       window.location.href = googleAuthURL;
