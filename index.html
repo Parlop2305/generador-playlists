@@ -203,10 +203,11 @@
 
     document.getElementById("generateBtn").onclick = async () => {
   console.log("🎬 Generando playlist en YouTube...");
+
   const limit = parseInt(document.getElementById("trackCount").value);
   const artist = document.getElementById("artist").value;
   const algorithm = document.getElementById("algorithm").value;
-  const sortType = document.getElementById("sort").value;  // 👈 ESTA línea es clave
+  const sortType = document.getElementById("sort").value;
 
   let queries = buildQueries(artist, algorithm);
   let rawVideos = [];
@@ -252,10 +253,12 @@
       "⚠️ No se encontraron canciones. Intenta con otro artista.";
     return;
   }
-      if (sortType === "title") {
+
+  // Ordena solo si se elige "title"
+  if (sortType === "title") {
     rawVideos.sort((a, b) => a.title.localeCompare(b.title));
   }
-  
+
   const videoIds = rawVideos.slice(0, limit).map(v => v.id);
   const playlistId = await createPlaylist(`Playlist (${algorithm}) - ${artist}`);
 
