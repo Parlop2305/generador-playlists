@@ -309,7 +309,7 @@ for (let q of queries) {
 
 // APLICAR ORDENAMIENTO
 rawTracks = applySortingIfNeeded(rawTracks, 'spotify');
-trackUris = rawTracks.map(t => t.uri);
+trackUris = rawTracks.slice(0, limit).map(t => t.uri);
       
 
   const userRes = await fetch('https://api.spotify.com/v1/me', {
