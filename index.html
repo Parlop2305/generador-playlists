@@ -372,11 +372,11 @@ trackUris = rawTracks.slice(0, limit).map(t => t.uri);
     const extra = extras[Math.floor(Math.random() * extras.length)];
   if (algorithm === "content") {
     return [
-      `${artist} official music video`,
-      `${artist} official audio`,
-      `${artist} song`,
-      `${artist} single`,
-      `${artist} videoclip`
+      `artist:${artist} official music video`,
+      `artist:${artist} official audio`,
+      `artist:${artist} song`,
+      `artist:${artist} single`,
+      `artist:${artist} videoclip`
 ];
   } else if (algorithm === "collaborative") {
    const perfiles = {
