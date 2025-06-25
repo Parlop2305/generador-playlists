@@ -202,11 +202,13 @@
 });
 
     document.getElementById("generateBtn").onclick = async () => {
-      console.log("🎬 Generando playlist en YouTube...");
-      const limit = parseInt(document.getElementById("trackCount").value);
-      const artist = document.getElementById("artist").value;
-      const algorithm = document.getElementById("algorithm").value;
-      let queries = buildQueries(artist, algorithm);
+  console.log("🎬 Generando playlist en YouTube...");
+  const limit = parseInt(document.getElementById("trackCount").value);
+  const artist = document.getElementById("artist").value;
+  const algorithm = document.getElementById("algorithm").value;
+  const sortType = document.getElementById("sort").value;  // 👈 ESTA línea es clave
+
+  let queries = buildQueries(artist, algorithm);
   let rawVideos = [];
 
   for (let query of queries) {
@@ -223,23 +225,20 @@
     if (!data.items || !Array.isArray(data.items)) continue;
 
     for (let item of data.items) {
-      const title = item.snippet.title.toLowerCase();
+      const title = item.snippet.title;
       const id = item.id?.videoId;
 
       if (
         id &&
-        !title.includes("mix") &&
-        !title.includes("album") &&
-        !title.includes("recopilación") &&
-        !title.includes("full") &&
-        !title.includes("live") &&
-        !title.includes("concert") &&
-        !rawVideos.find(v => v.id === id)
+        !title.toLowerCase().includes("mix") &&
+        !title.toLowerCase().includes("album") &&
+        !title.toLowerCase().includes("recopilación") &&
+        !title.toLowerCase().includes("full") &&
+        !title.toLowerCase().includes("live") &&
+        !title.toLowerCase().includes("concert") &&
+        !rawVideos.some(v => v.id === id)
       ) {
-        rawVideos.push({
-          id: id,
-          title: item.snippet.title
-        });
+        rawVideos.push({ id, title });
       }
 
       if (rawVideos.length >= limit) break;
@@ -248,21 +247,21 @@
     if (rawVideos.length >= limit) break;
   }
 
+  // ✅ Aplicar ordenamiento solo por título para YouTube
+  if (sortType === "title") {
+    rawVideos.sort((a, b) => a.title.localeCompare(b.title));
+  }
+
   if (rawVideos.length === 0) {
     document.getElementById("playlistLink").innerHTML =
       "⚠️ No se encontraron canciones. Intenta con otro artista.";
     return;
   }
 
-  // 🧠 Aplicar ordenamiento solo por título en YouTube
-  if (sortType === "title") {
-    rawVideos.sort((a, b) => a.title.localeCompare(b.title));
-  }
-
   const playlistId = await createPlaylist(`Playlist (${algorithm}) - ${artist}`);
 
-  for (let vid of rawVideos) {
-    await addVideoToPlaylist(playlistId, vid.id);
+  for (let video of rawVideos) {
+    await addVideoToPlaylist(playlistId, video.id);
   }
 
   document.getElementById("playlistLink").innerHTML =
